@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import glob
+import functools
 import os.path as osp
 
 import cityscapesscripts.helpers.labels as CSLabels
@@ -26,18 +27,21 @@ def collect_files(img_dir, gt_dir):
     return files
 
 
-def collect_annotations(files, nproc=1):
+def collect_annotations(files, car_only, nproc=1):
     print('Loading annotation images')
+
+    _f = functools.partial(load_img_info, car_only=car_only)
     if nproc > 1:
         images = mmcv.track_parallel_progress(
-            load_img_info, files, nproc=nproc)
+            _f, files, nproc=nproc)
     else:
-        images = mmcv.track_progress(load_img_info, files)
+        images = mmcv.track_progress(_f, files)
 
     return images
 
 
-def load_img_info(files):
+def load_img_info(files, car_only=False):
+
     img_file, inst_file, segm_file = files
     inst_img = mmcv.imread(inst_file, 'unchanged')
     # ids < 24 are stuff labels (filtering them first is about 5% faster)
@@ -52,6 +56,10 @@ def load_img_info(files):
             continue
 
         category_id = label.id
+
+        if car_only and category_id != 26:
+            continue
+
         iscrowd = int(inst_id < 1000)
         mask = np.asarray(inst_img == inst_id, dtype=np.uint8, order='F')
         mask_rle = maskUtils.encode(mask[:, :, None])[0]
@@ -118,6 +126,7 @@ def parse_args():
     parser.add_argument('--img-dir', default='leftImg8bit', type=str)
     parser.add_argument('--gt-dir', default='gtFine', type=str)
     parser.add_argument('-o', '--out-dir', help='output path')
+    parser.add_argument('--car-only', action='store_true', help="whether to extract car annotations only")
     parser.add_argument(
         '--nproc', default=1, type=int, help='number of process')
     args = parser.parse_args()
@@ -144,7 +153,7 @@ def main():
                 print_tmpl='It took {}s to convert Cityscapes annotation'):
             files = collect_files(
                 osp.join(img_dir, split), osp.join(gt_dir, split))
-            image_infos = collect_annotations(files, nproc=args.nproc)
+            image_infos = collect_annotations(files, car_only=args.car_only, nproc=args.nproc)
             cvt_annotations(image_infos, osp.join(out_dir, json_name))
 
 
