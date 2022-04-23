@@ -33,8 +33,6 @@ def dump_new_config(dataset_name):
 def main():
 
     parser = argparse.ArgumentParser(description="Run training")
-    parser.add_argument("--shift", type=str, default="no", help="[ratio(0.~1.)]-[direction(left,top,right,bottom)]")
-    parser.add_argument("--scale", type=str, default="no", help="[ratio(0.~1.)]-[direction(up,down)]")
     parser.add_argument('--car-only', action='store_true', help="whether to extract car annotations only")
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--run-local', action='store_true', help="whether to run in local machine")
