@@ -122,7 +122,6 @@ sim10k_dataset = dict(
 
 
 cityscapes_data_root = os.environ["HOME"] + '/datasets/cityscapes_car/'
-'''
 cityscapes_trian_dataset = dict(
     type='RepeatDataset',
     times=8,
@@ -133,12 +132,14 @@ cityscapes_trian_dataset = dict(
     img_prefix=cityscapes_data_root + 'leftImg8bit/train/',
     pipeline=train_pipeline)
 )
-'''
 
 data = dict(
     samples_per_gpu=1,
     workers_per_gpu=2,
-    train=sim10k_dataset,
+    train=dict(
+        type='ConcatDataset',
+        datasets=[sim10k_dataset, cityscapes_trian_dataset],
+        separate_eval=False),
     val=dict(
         type='CityscapesDataset',
         ann_file=cityscapes_data_root +

@@ -164,3 +164,4 @@ custom_hooks = [
          log_checkpoint_metadata=True,
          num_eval_images=100)
 ]
+checkpoint_config = dict(interval=10)
