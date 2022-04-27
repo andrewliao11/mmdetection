@@ -229,7 +229,7 @@ class DefaultFormatBundle:
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
             results['img'] = DC(
                 to_tensor(img), padding_value=self.pad_val['img'], stack=True)
-        for key in ['proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels']:
+        for key in ['proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels', 'occluded', 'truncated']:
             if key not in results:
                 continue
             results[key] = DC(to_tensor(results[key]))
@@ -339,11 +339,14 @@ class Collect:
 
         data = {}
         img_meta = {}
+        
         for key in self.meta_keys:
             img_meta[key] = results[key]
         data['img_metas'] = DC(img_meta, cpu_only=True)
         for key in self.keys:
             data[key] = results[key]
+
+        
         return data
 
     def __repr__(self):

@@ -13,6 +13,8 @@ from mmdet.models.utils import build_transformer
 from ..builder import HEADS, build_loss
 from .anchor_free_head import AnchorFreeHead
 
+from copy import deepcopy
+
 
 @HEADS.register_module()
 class DETRHead(AnchorFreeHead):
@@ -78,10 +80,16 @@ class DETRHead(AnchorFreeHead):
                  test_cfg=dict(max_per_img=100),
                  init_cfg=None,
                  **kwargs):
+
         # NOTE here use `AnchorFreeHead` instead of `TransformerHead`,
         # since it brings inconvenience when the initialization of
         # `AnchorFreeHead` is called.
         super(AnchorFreeHead, self).__init__(init_cfg)
+
+        #NOTE: Hacky now: Avoid inplace change of `loss_cls`
+        loss_cls = deepcopy(loss_cls)
+
+
         self.bg_cls_weight = 0
         self.sync_cls_avg_factor = sync_cls_avg_factor
         class_weight = loss_cls.get('class_weight', None)

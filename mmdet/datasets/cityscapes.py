@@ -6,7 +6,7 @@ import glob
 import os
 import os.path as osp
 import tempfile
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import mmcv
 import numpy as np
@@ -71,6 +71,10 @@ class CityscapesDataset(CocoDataset):
         gt_bboxes_ignore = []
         gt_masks_ann = []
 
+        # Add additional keys provided in synthetic datasets (Only support scalar)
+        other_keys = ['truncated', 'occluded']
+        gt_meta = defaultdict(lambda: [])
+
         for i, ann in enumerate(ann_info):
             if ann.get('ignore', False):
                 continue
@@ -86,6 +90,10 @@ class CityscapesDataset(CocoDataset):
                 gt_bboxes.append(bbox)
                 gt_labels.append(self.cat2label[ann['category_id']])
                 gt_masks_ann.append(ann['segmentation'])
+
+                for k in other_keys:
+                    if k in ann:
+                        gt_meta[k].append(ann[k])
 
         if gt_bboxes:
             gt_bboxes = np.array(gt_bboxes, dtype=np.float32)
@@ -105,6 +113,10 @@ class CityscapesDataset(CocoDataset):
             bboxes_ignore=gt_bboxes_ignore,
             masks=gt_masks_ann,
             seg_map=img_info['segm_file'])
+
+        for k in other_keys:
+            if k in gt_meta:
+                ann.update({k: np.array(gt_meta[k], dtype=np.float32)})
 
         return ann
 

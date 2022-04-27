@@ -1,7 +1,7 @@
 
 
 class BboxPerturbation():
-    def __init__(self, shift, scale):
+    def __init__(self, shift, scale, drop):
 
         if shift != "no":
             ratio, direction = shift.split("-")
@@ -13,8 +13,14 @@ class BboxPerturbation():
             ratio = float(ratio)
             scale = (ratio, direction)
 
+        if drop != "no":
+            param, criterion = drop.split("-")
+            param = float(param)
+            drop = (param, criterion)
+
         self.shift = shift
         self.scale = scale
+        self.drop = drop
         
     def _scale_bbox(self, bbox, image_w, image_h):
         ratio, direction = self.scale
@@ -104,3 +110,13 @@ class BboxPerturbation():
 
         return bbox
 
+    def is_drop(self, box):
+        if self.drop != "no":
+            param, criterion = self.drop
+            x_top_left, y_top_left, box_w, box_h = box   
+            if  criterion == "small":
+                return box_w * box_h < param
+            else:
+                return False
+        else:
+            return False

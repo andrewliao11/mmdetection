@@ -608,3 +608,55 @@ class FilterAnnotations:
         return self.__class__.__name__ + \
                f'(min_gt_bbox_wh={self.min_gt_bbox_wh},' \
                f'always_keep={self.always_keep})'
+
+
+@PIPELINES.register_module()
+class LoadAnnotationsWithMeta(LoadAnnotations):
+
+    def __init__(self,
+                 with_bbox=True,
+                 with_label=True,
+                 with_mask=False,
+                 with_seg=False,
+                 poly2mask=True,
+                 denorm_bbox=False,
+                 meta_keys=[], 
+                 file_client_args=dict(backend='disk')):
+        self.with_bbox = with_bbox
+        self.with_label = with_label
+        self.with_mask = with_mask
+        self.with_seg = with_seg
+        self.poly2mask = poly2mask
+        self.denorm_bbox = denorm_bbox
+        self.file_client_args = file_client_args.copy()
+        self.meta_keys = meta_keys
+        self.file_client = None
+
+    def __call__(self, results):
+        """Call function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:`mmdet.CustomDataset`.
+
+        Returns:
+            dict: The dict contains loaded bounding box, label, mask and
+                semantic segmentation annotations.
+        """
+
+        if self.with_bbox:
+            results = self._load_bboxes(results)
+            if results is None:
+                return None
+        if self.with_label:
+            results = self._load_labels(results)
+        if self.with_mask:
+            results = self._load_masks(results)
+        if self.with_seg:
+            results = self._load_semantic_seg(results)
+
+        
+        for k in self.meta_keys:
+            if k in results['ann_info']:
+                results[k] = results['ann_info'][k].copy()
+
+        return results

@@ -41,7 +41,7 @@ def collect_annotations(files, perturbor, nproc=1):
     return images
 
 
-def load_img_info(files, perturbor=None):
+def load_img_info(files, perturbor):
 
     img_file, gt_file, segm_file = files
     
@@ -69,7 +69,11 @@ def load_img_info(files, perturbor=None):
         box_w = int(bbox['bndbox']['xmax']) - int(bbox['bndbox']['xmin'])
         box_h = int(bbox['bndbox']['ymax']) - int(bbox['bndbox']['ymin'])
         
-        box = perturbor.shift_or_scale_bbox([x_top_left, y_top_left, box_w, box_h], img_w, img_h)
+        box = [x_top_left, y_top_left, box_w, box_h]
+        if perturbor.is_drop(box):
+            continue
+
+        box = perturbor.shift_or_scale_bbox(box, img_w, img_h)
         new_bboxes.append(box)
         category_ids.append(category_id)
 
@@ -138,6 +142,7 @@ def parse_args():
     parser.add_argument('--gt-dir', default='VOC2012/Annotations', type=str)
     parser.add_argument("--shift", type=str, default="no", help="[ratio(0.~1.)]-[direction(left,top,right,bottom)]")
     parser.add_argument("--scale", type=str, default="no", help="[ratio(0.~1.)]-[direction(up,down)]")
+    parser.add_argument("--drop", type=str, default="no", help="[param]-[criterion(small,truncated,occluded)]")
     parser.add_argument('-o', '--out-dir', help='output path')
     parser.add_argument(
         '--nproc', default=1, type=int, help='number of process')
@@ -157,12 +162,12 @@ def main():
     set_name = dict(
         train='voc2012_annotations.json')
 
-    perturbor = BboxPerturbation(args.shift, args.scale)
+    perturbor = BboxPerturbation(args.shift, args.scale, args.drop)
 
     for split, json_name in set_name.items():
         print(f'Converting {split} into {json_name}')
         with mmcv.Timer(
-                print_tmpl='It took {}s to convert Cityscapes annotation'):
+                print_tmpl='It took {}s to convert Sim10k annotation'):
 
             
             files = collect_files(img_dir, gt_dir)

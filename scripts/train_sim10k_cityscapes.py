@@ -13,7 +13,7 @@ def execute(cmd, dry_run=False):
 
 def dump_new_config(dataset_name):
     base_config_path = "configs/my_cfg/base_detr_r50_8x2_150e_sim10k_cityscapes_car.py"
-    new_config_path = f"configs/my_cfg/detr_r50_8x2_150e_{dataset_name}_cityscapes_car.py"
+    new_config_path = f"configs/my_cfg/_detr_r50_8x2_150e_{dataset_name}_cityscapes_car.py"
 
     with open(base_config_path) as f:
         cont = f.read()
@@ -90,13 +90,13 @@ def main():
 
     
     ct = datetime.datetime.now()
-    wadnb_name = f"{ct.year}.{ct.month}.{ct.day}.{ct.hour}.{ct.minute}.{ct.second}"
+    wandb_name = f"{ct.year}.{ct.month}.{ct.day}.{ct.hour}.{ct.minute}.{ct.second}"
     wandb_project = f"label-translation-detr-{dataset_name}-cityscapes_car"
     
     if args.num_gpus == 1:
-        cmd = f"python tools/train.py {config} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wadnb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
+        cmd = f"python tools/train.py {config} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wandb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
     else:
-        cmd = f"bash ./tools/dist_train.sh {config} {args.num_gpus} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wadnb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
+        cmd = f"bash ./tools/dist_train.sh {config} {args.num_gpus} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wandb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
 
     if not args.run_local:
         cmd += " --work-dir /results"
