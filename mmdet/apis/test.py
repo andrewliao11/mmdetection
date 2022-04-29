@@ -52,13 +52,14 @@ def single_gpu_test(model,
 
                 model.module.show_result(
                     img_show,
-                    result[i],
+                    result[i][:2],
                     bbox_color=PALETTE,
                     text_color=PALETTE,
                     mask_color=PALETTE,
                     show=show,
                     out_file=out_file,
                     score_thr=show_score_thr)
+
 
         # encode mask results
         if isinstance(result[0], tuple):
@@ -75,6 +76,7 @@ def single_gpu_test(model,
 
         for _ in range(batch_size):
             prog_bar.update()
+
     return results
 
 

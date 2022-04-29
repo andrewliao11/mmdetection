@@ -160,11 +160,21 @@ data = dict(
     samples_per_gpu=1,
     workers_per_gpu=2,
     train=dict(
-        type='ConcatDataset',
+        type='ConcatDomainDataset',
         datasets=[sim10k_dataset, cityscapes_trian_dataset],
-        separate_eval=False),
-    val=cityscapes_val_dataset,
-    test=cityscapes_test_dataset)
+        separate_eval=False
+        ),
+    val=dict(
+        type='ConcatDomainDataset',
+        datasets=[sim200k_dataset, cityscapes_val_dataset],
+        separate_eval=False
+        ),
+    test=dict(
+        type='ConcatDomainDataset',
+        datasets=[sim200k_dataset, cityscapes_test_dataset],
+        #separate_eval=False
+        )
+    )
 
 
 
@@ -195,7 +205,8 @@ custom_hooks = [
         wandb_init_kwargs={
             'entity': "andrew-liao",
             'project': "label-translation-detr-sim10k_cityscapes_car", 
-            'name': "test"
+            'name': "test", 
+            'mode': 'disabled'
             },
          interval=10,
          log_checkpoint=True,
