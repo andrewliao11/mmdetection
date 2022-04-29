@@ -1,3 +1,7 @@
+'''
+Train on cityscapes, and evaluate on cityscapes
+python train_cityscapes.py --subsample 0.5 --num_gpus 4
+'''
 import os
 import datetime
 import argparse
@@ -33,6 +37,7 @@ def dump_new_config(dataset_name):
 def main():
 
     parser = argparse.ArgumentParser(description="Run training")
+    parser.add_argument("--subsample", default=1., type=float, help="ratio of sub-sampling target dataset")
     parser.add_argument('--car-only', action='store_true', help="whether to extract car annotations only")
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--run-local', action='store_true', help="whether to run in local machine")
@@ -51,9 +56,14 @@ def main():
     if args.car_only:
         print("Extract car only")
         dataset_name += "_car"
+
+    
+    if args.subsample < 1.:
+        dataset_name += f"_subsample-{int(args.subsample*100)}"
+
     
     out_dir = out_dir / "datasets" / dataset_name
-    cmd = f"python tools/dataset_converters/cityscapes.py /datasets/cityscapes --nproc 8 --out-dir {out_dir / 'annotations'}"
+    cmd = f"python tools/dataset_converters/cityscapes.py /datasets/cityscapes --nproc 8 --out-dir {out_dir / 'annotations'} --subsample {args.subsample}"
     if args.car_only:
         cmd += " --car-only"
     execute(cmd, dry_run=args.dry_run)
@@ -91,4 +101,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

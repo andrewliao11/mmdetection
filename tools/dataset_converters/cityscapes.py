@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import random
 import glob
 import functools
 import os.path as osp
@@ -10,7 +11,10 @@ import numpy as np
 import pycocotools.mask as maskUtils
 
 
-def collect_files(img_dir, gt_dir):
+
+SEED = 42
+
+def collect_files(img_dir, gt_dir, subsample=None):
     suffix = 'leftImg8bit.png'
     files = []
     for img_file in glob.glob(osp.join(img_dir, '**/*.png')):
@@ -23,6 +27,12 @@ def collect_files(img_dir, gt_dir):
         files.append((img_file, inst_file, segm_file))
     assert len(files), f'No images found in {img_dir}'
     print(f'Loaded {len(files)} images from {img_dir}')
+
+    if subsample is not None:
+        random.seed(SEED)
+        n = int(subsample * len(files))
+        random.shuffle(files)
+        files = files[:n]
 
     return files
 
@@ -123,6 +133,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Convert Cityscapes annotations to COCO format')
     parser.add_argument('cityscapes_path', help='cityscapes data path')
+
+    parser.add_argument('--subsample', default=1., type=float)
     parser.add_argument('--img-dir', default='leftImg8bit', type=str)
     parser.add_argument('--gt-dir', default='gtFine', type=str)
     parser.add_argument('-o', '--out-dir', help='output path')
@@ -151,8 +163,9 @@ def main():
         print(f'Converting {split} into {json_name}')
         with mmcv.Timer(
                 print_tmpl='It took {}s to convert Cityscapes annotation'):
+            
             files = collect_files(
-                osp.join(img_dir, split), osp.join(gt_dir, split))
+                osp.join(img_dir, split), osp.join(gt_dir, split), subsample=args.subsample if split == "train" else None)
             image_infos = collect_annotations(files, car_only=args.car_only, nproc=args.nproc)
             cvt_annotations(image_infos, osp.join(out_dir, json_name))
 

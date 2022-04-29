@@ -126,32 +126,47 @@ sim200k_dataset = dict(
         type='CityscapesDataset',
         ann_file=sim200k_data_root + 'annotations/voc2012_annotations.json',
         img_prefix=sim200k_data_root + 'JPEGImages/',
-        pipeline=test_pipeline
+        pipeline=test_pipeline)
+
+cityscapes_data_root = os.environ["HOME"] + '/datasets/cityscapes_car/'
+cityscapes_trian_dataset = dict(
+    type='RepeatDataset',
+    times=8,
+    dataset=dict(
+        type='CityscapesDataset',
+        ann_file=cityscapes_data_root +
+        'annotations/instancesonly_filtered_gtFine_train.json',
+    img_prefix=cityscapes_data_root + 'leftImg8bit/train/',
+    pipeline=train_pipeline)
 )
 
 
-cityscapes_data_root = os.environ["HOME"] + '/datasets/cityscapes_car/'
 
 cityscapes_val_dataset = dict(
         type='CityscapesDataset',
-        ann_file=cityscapes_data_root + 'annotations/instancesonly_filtered_gtFine_val.json',
+        ann_file=cityscapes_data_root +
+        'annotations/instancesonly_filtered_gtFine_val.json',
         img_prefix=cityscapes_data_root + 'leftImg8bit/val/',
-        pipeline=test_pipeline
-)
+        pipeline=test_pipeline)
+
 cityscapes_test_dataset = dict(
         type='CityscapesDataset',
-        ann_file=cityscapes_data_root + 'annotations/instancesonly_filtered_gtFine_test.json',
+        ann_file=cityscapes_data_root +
+        'annotations/instancesonly_filtered_gtFine_test.json',
         img_prefix=cityscapes_data_root + 'leftImg8bit/test/',
-        pipeline=test_pipeline
-)
+        pipeline=test_pipeline)
 
 data = dict(
     samples_per_gpu=1,
     workers_per_gpu=2,
-    train=sim10k_dataset,
+    train=dict(
+        type='ConcatDataset',
+        datasets=[sim10k_dataset, cityscapes_trian_dataset],
+        separate_eval=False),
     val=cityscapes_val_dataset,
-    test=cityscapes_test_dataset
-)
+    test=cityscapes_test_dataset)
+
+
 
 evaluation = dict(interval=1, metric='bbox')
 # optimizer

@@ -16,7 +16,7 @@ def execute(cmd, dry_run=False):
 
 
 def dump_new_config(src_dataset_name, tgt_dataset_name):
-    base_config_path = "configs/my_cfg/base_detr_r50_8x2_150e_mix_sim10k_cityscapes_car.py"
+    base_config_path = "configs/my_cfg/base_finetune_detr_r50_8x2_150e_mix_sim10k_cityscapes_car.py"
     new_config_path = f"configs/my_cfg/_detr_r50_8x2_150e_mix_{src_dataset_name}_{tgt_dataset_name}.py"
 
     with open(base_config_path) as f:
@@ -95,9 +95,9 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     cmd = f"python tools/dataset_converters/cityscapes.py /datasets/cityscapes --nproc 8 --out-dir {out_dir / 'annotations'} --car-only --subsample {args.subsample}"
-    execute(cmd, dry_run=args.dry_run)
+    #execute(cmd, dry_run=args.dry_run)
     cmd = f"ln -s /datasets/cityscapes/leftImg8bit {out_dir}"
-    execute(cmd, dry_run=args.dry_run)
+    #execute(cmd, dry_run=args.dry_run)
 
 
     print("Prepare Sim10k")
@@ -109,9 +109,9 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     cmd = f"python tools/dataset_converters/sim10k.py /datasets/sim10k --shift {args.shift} --scale {args.scale} --drop {args.drop} --nproc 8 --out-dir {out_dir / 'annotations'}"
-    execute(cmd, dry_run=args.dry_run)
+    #execute(cmd, dry_run=args.dry_run)
     cmd = f"ln -s /datasets/sim10k/VOC2012/JPEGImages {out_dir}"
-    execute(cmd, dry_run=args.dry_run)
+    #execute(cmd, dry_run=args.dry_run)
 
     
 
@@ -129,9 +129,9 @@ def main():
     wandb_project = f"label-translation-detr-mix_{src_dataset_name}-{tgt_dataset_name}"
     
     if args.num_gpus == 1:
-        cmd = f"python tools/train.py {config} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wandb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
+        cmd = f"python tools/train.py {config} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr}"
     else:
-        cmd = f"bash ./tools/dist_train.sh {config} {args.num_gpus} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr} custom_hooks.0.wandb_init_kwargs.name={wandb_name} custom_hooks.0.wandb_init_kwargs.project={wandb_project}"
+        cmd = f"bash ./tools/dist_train.sh {config} {args.num_gpus} --cfg-options sim10k_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} optimizer.lr={lr}"
 
     if not args.run_local:
         cmd += " --work-dir /results"

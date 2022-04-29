@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import random
 import glob
 import imagesize
 import functools
@@ -15,7 +16,8 @@ import mmcv
 import numpy as np
 
 
-def collect_files(img_dir, gt_dir):
+SEED = 42
+def collect_files(img_dir, gt_dir, subsample=None):
     files = []
     for img_file in Path(img_dir).glob("*.jpg"):
                 
@@ -25,6 +27,13 @@ def collect_files(img_dir, gt_dir):
             files.append([img_file, gt_file, segm_file])
             
     print(f'Loaded {len(files)}')
+
+    if subsample is not None:
+        random.seed(SEED)
+        n = int(subsample * len(files))
+        random.shuffle(files)
+        files = files[:n]
+
     return files
 
 
@@ -140,6 +149,7 @@ def parse_args():
     parser.add_argument('sim10k_path', help='sim10k data path')
     parser.add_argument('--img-dir', default='VOC2012/JPEGImages', type=str)
     parser.add_argument('--gt-dir', default='VOC2012/Annotations', type=str)
+    parser.add_argument('--subsample', default=1., type=float)
     parser.add_argument("--shift", type=str, default="no", help="[ratio(0.~1.)]-[direction(left,top,right,bottom)]")
     parser.add_argument("--scale", type=str, default="no", help="[ratio(0.~1.)]-[direction(up,down)]")
     parser.add_argument("--drop", type=str, default="no", help="[param]-[criterion(small,truncated,occluded)]")
@@ -170,7 +180,7 @@ def main():
                 print_tmpl='It took {}s to convert Sim10k annotation'):
 
             
-            files = collect_files(img_dir, gt_dir)
+            files = collect_files(img_dir, gt_dir, subsample=args.subsample)
             image_infos = collect_annotations(files, perturbor=perturbor, nproc=args.nproc)
             cvt_annotations(image_infos, osp.join(out_dir, json_name))
 
