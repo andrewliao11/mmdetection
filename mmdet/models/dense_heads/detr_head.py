@@ -988,7 +988,7 @@ class ExtractFeatDETRHead(DETRHead):
         all_bbox_preds = self.fc_reg(self.activate(
             self.reg_ffn(outs_dec))).sigmoid()
         
-        return all_cls_scores, all_bbox_preds, encoder_outs
+        return all_cls_scores, all_bbox_preds, encoder_outs.cpu().numpy()
 
     def simple_test_bboxes(self, feats, img_metas, rescale=False):
         """Test det bboxes without test-time augmentation.

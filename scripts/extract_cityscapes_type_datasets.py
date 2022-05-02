@@ -17,7 +17,7 @@ def execute(cmd, dry_run=False):
 
 
 def dump_new_config(test_dataset_name):
-    base_config_path = "configs/my_cfg/base_detr_r50_8x2_150e_sim10k_cityscapes_car.py"
+    base_config_path = "configs/my_cfg/base_extract_feat_detr_r50_8x2_150e_sim10k_cityscapes_car.py"
     new_config_path = f"configs/my_cfg/_extract_feat_detr_r50_8x2_150e_{test_dataset_name}.py"
 
 
@@ -33,6 +33,17 @@ def dump_new_config(test_dataset_name):
                 elif test_dataset_name.startswith("sim10k"):
                     new_l = f"""    test=sim10k_dataset"""
                 lines[i] = new_l
+            
+
+            if "sim10k" in test_dataset_name:
+                if l.startswith("""sim10k_data_root = os.environ["HOME"] + '/datasets/sim10k/'"""):
+                    new_l = f"""sim10k_data_root = os.environ["HOME"] + '/datasets/{test_dataset_name}/'"""
+
+                
+            if "sim200k" in test_dataset_name:
+                if l.startswith("""sim200k_data_root = os.environ["HOME"] + '/datasets/sim200k/'"""):
+                    new_l = f"""sim200k_data_root = os.environ["HOME"] + '/datasets/{test_dataset_name}/'"""
+
 
             if l.startswith("        type='DETRHead',"):
                 new_l = f"""        type='ExtractFeatDETRHead',"""
@@ -107,7 +118,7 @@ def main():
         out_dir = out_dir / "datasets" / test_dataset_name
         os.makedirs(out_dir, exist_ok=True)
 
-        cmd = f"python tools/dataset_converters/sim10k.py /datasets/sim10k --shift {args.shift} --scale {args.scale} --nproc 8 --out-dir {out_dir / 'annotations'}"
+        cmd = f"python tools/dataset_converters/sim10k.py /datasets/sim10k --shift {args.shift} --scale {args.scale} --nproc 8 --out-dir {out_dir / 'annotations'}  --subsample 0.2"
         execute(cmd, dry_run=args.dry_run)
         cmd = f"ln -s /datasets/sim10k/VOC2012/JPEGImages {out_dir}"
         execute(cmd, dry_run=args.dry_run)
@@ -121,9 +132,9 @@ def main():
     config = dump_new_config(test_dataset_name=test_dataset_name)
     
     
-    cmd = f"python tools/test.py {config} {args.checkpoint_path} --cfg-options {args.test_dataset}_data_root={out_dir}/ data.samples_per_gpu={args.samples_per_gpu} --show --eval bbox"
+    cmd = f"python tools/test.py {config} {args.checkpoint_path} --cfg-options data.samples_per_gpu={args.samples_per_gpu} --show"
     if args.out:
-        cmd += f" --work-dir {args.out}"
+        cmd += f" --out {args.out}"
     execute(cmd, dry_run=args.dry_run)
 
 

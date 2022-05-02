@@ -80,17 +80,6 @@ model = dict(
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-train_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='Resize', img_scale=[(2048, 800), (2048, 1024)], keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='Normalize', **img_norm_cfg),
-    dict(type='Pad', size_divisor=32),
-    dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
-]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
@@ -110,14 +99,11 @@ test_pipeline = [
 
 sim10k_data_root = os.environ["HOME"] + '/datasets/sim10k/'
 sim10k_dataset = dict(
-    type='RepeatDataset',
-    times=8,
-    dataset=dict(
         type='CityscapesDataset',
         ann_file=sim10k_data_root +
         'annotations/voc2012_annotations.json',
     img_prefix=sim10k_data_root + 'JPEGImages/',
-    pipeline=train_pipeline)
+    pipeline=test_pipeline
 )
 
 # For testing
@@ -126,57 +112,38 @@ sim200k_dataset = dict(
         type='CityscapesDataset',
         ann_file=sim200k_data_root + 'annotations/voc2012_annotations.json',
         img_prefix=sim200k_data_root + 'JPEGImages/',
-        pipeline=test_pipeline)
-
-cityscapes_data_root = os.environ["HOME"] + '/datasets/cityscapes_car/'
-cityscapes_trian_dataset = dict(
-    type='RepeatDataset',
-    times=8,
-    dataset=dict(
-        type='CityscapesDataset',
-        ann_file=cityscapes_data_root +
-        'annotations/instancesonly_filtered_gtFine_train.json',
-    img_prefix=cityscapes_data_root + 'leftImg8bit/train/',
-    pipeline=train_pipeline)
+        pipeline=test_pipeline
 )
 
 
+cityscapes_data_root = os.environ["HOME"] + '/datasets/cityscapes_car/'
 
+cityscapes_train_dataset = dict(
+        type='CityscapesDataset',
+        ann_file=cityscapes_data_root + 'annotations/instancesonly_filtered_gtFine_train.json',
+        img_prefix=cityscapes_data_root + 'leftImg8bit/train/',
+        pipeline=test_pipeline
+)
 cityscapes_val_dataset = dict(
         type='CityscapesDataset',
-        ann_file=cityscapes_data_root +
-        'annotations/instancesonly_filtered_gtFine_val.json',
+        ann_file=cityscapes_data_root + 'annotations/instancesonly_filtered_gtFine_val.json',
         img_prefix=cityscapes_data_root + 'leftImg8bit/val/',
-        pipeline=test_pipeline)
-
+        pipeline=test_pipeline
+)
 cityscapes_test_dataset = dict(
         type='CityscapesDataset',
-        ann_file=cityscapes_data_root +
-        'annotations/instancesonly_filtered_gtFine_test.json',
+        ann_file=cityscapes_data_root + 'annotations/instancesonly_filtered_gtFine_test.json',
         img_prefix=cityscapes_data_root + 'leftImg8bit/test/',
-        pipeline=test_pipeline)
+        pipeline=test_pipeline
+)
 
 data = dict(
     samples_per_gpu=1,
     workers_per_gpu=2,
-    train=dict(
-        type='ConcatDomainDataset',
-        datasets=[sim10k_dataset, cityscapes_trian_dataset],
-        separate_eval=False
-        ),
-    val=dict(
-        type='ConcatDomainDataset',
-        datasets=[sim200k_dataset, cityscapes_val_dataset],
-        separate_eval=False
-        ),
-    test=dict(
-        type='ConcatDomainDataset',
-        datasets=[sim200k_dataset, cityscapes_test_dataset],
-        #separate_eval=False
-        )
-    )
-
-
+    train=sim10k_dataset,
+    val=cityscapes_val_dataset,
+    test=cityscapes_test_dataset
+)
 
 evaluation = dict(interval=1, metric='bbox')
 # optimizer
@@ -205,8 +172,7 @@ custom_hooks = [
         wandb_init_kwargs={
             'entity': "andrew-liao",
             'project': "label-translation-detr-sim10k_cityscapes_car", 
-            'name': "test", 
-            'mode': 'disabled'
+            'name': "test"
             },
          interval=10,
          log_checkpoint=True,
